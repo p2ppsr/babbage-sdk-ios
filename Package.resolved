@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "generic-json-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/iwill/generic-json-swift.git",
+      "state" : {
+        "revision" : "a137894b2a217abe489cdf1ea287e6f7819b1051",
+        "version" : "2.0.1"
+      }
+    }
+  ],
+  "version" : 2
+}

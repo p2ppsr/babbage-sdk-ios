@@ -22,7 +22,9 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "BabbageSDK",
-            dependencies: ["generic-json-swift"]),
+            dependencies: [
+                .product(name: "GenericJSON", package: "generic-json-swift")
+            ]),
         // .testTarget(
         //     name: "BabbageSDKTests",
         //     dependencies: ["BabbageSDK"]),
