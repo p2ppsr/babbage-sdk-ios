@@ -14,7 +14,7 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/iwill/generic-json-swift.git", from: "2.0.1"),
+        .package(url: "https://github.com/iwill/generic-json-swift.git", .exact("2.0.1")),
         
     ],
     targets: [
@@ -22,7 +22,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "BabbageSDK",
-            dependencies: ["GenericJSON"]),
+            dependencies: ["generic-json-swift"]),
         // .testTarget(
         //     name: "BabbageSDKTests",
         //     dependencies: ["BabbageSDK"]),
