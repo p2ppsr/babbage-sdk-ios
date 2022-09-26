@@ -10,12 +10,25 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     public typealias Callback = (String) -> Void
     public var callbackIDMap: [String : Callback] = [:]
 
-    let HADES_BASE_URL = "https://staging-mobile-portal.babbage.systems" //"http://localhost:3000" // 
+    var webviewStartURL:String = ""
     
     public func setParent(parent: UIViewController) {
         parent.addChild(self)
         parent.view.addSubview(self.view)
         self.didMove(toParent: parent)
+    }
+    
+    public required init(webviewStartURL: String = "https://staging-mobile-portal.babbage.systems") {
+        
+        // We aren't using a nib or storyboard for the UI
+        super.init(nibName: nil, bundle: nil)
+        
+        // Set the hades webviewStart URL
+        self.webviewStartURL = webviewStartURL
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
     }
     
     public override func loadView() {
@@ -42,7 +55,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         webView.configuration.userContentController.addUserScript(script)
         
         // Load the request url for hades server
-        let request = NSURLRequest(url: URL(string: HADES_BASE_URL)!)
+        let request = NSURLRequest(url: URL(string: webviewStartURL)!)
         webView.load(request as URLRequest)
     }
     
