@@ -15,9 +15,13 @@ To start creating apps with Babbage, you first need to install this package usin
 * Right click on your Xcode project and select **``Add Packages``** from the drop-down menu. 
 * Next, copy and paste the GitHub URL for this repo, select the current version, and click **``Add Package``**.
 
+![](./readme-support/addPackage.png)
+
 
 ### Using CocoaPods
 * To install this package using cocoapods, simply follow the instructions outlined on their website: https://guides.cocoapods.org/using/using-cocoapods.html
+
+Make sure the package dependencies have actually been added to your project once this step is complete to prevent possible build errors.
 
 ## Example Usage
 
@@ -69,6 +73,8 @@ class ViewController: UIViewController {
 ```
 
 ## API
+
+**Note:** All SDK functions must be called within a ```Task.init``` block as shown above.
 
 ### encrypt
 
