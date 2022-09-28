@@ -122,7 +122,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     // Helper function which returns a JSON type string
-    func formatString(param: String) -> JSON {
+    func convertToJSONString(param: String) -> JSON {
         return try! JSON(param)
     }
 
@@ -139,9 +139,9 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             "type":"CWI",
             "call":"encrypt",
             "params": [
-                "plaintext": formatString(param: base64Encoded!),
-                "protocolID": formatString(param: protocolID),
-                "keyID": formatString(param: keyID),
+                "plaintext": convertToJSONString(param: base64Encoded!),
+                "protocolID": convertToJSONString(param: protocolID),
+                "keyID": convertToJSONString(param: keyID),
                 "returnType": "string"
             ]
         ]
@@ -162,9 +162,9 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             "type":"CWI",
             "call":"decrypt",
             "params": [
-                "ciphertext": formatString(param: ciphertext),
-                "protocolID": formatString(param: protocolID),
-                "keyID": formatString(param: keyID),
+                "ciphertext": convertToJSONString(param: ciphertext),
+                "protocolID": convertToJSONString(param: protocolID),
+                "keyID": convertToJSONString(param: keyID),
                 "returnType": "string"
             ]
         ]
@@ -175,6 +175,44 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         // Pull out the expect result string
         let decryptedText:String = (responseObject.objectValue?["result"]?.stringValue)!
         return decryptedText
+    }
+    
+    // Returns a JSON object with non-null values
+    func getValidJSON(params: [String: JSON]) -> JSON {
+        var paramsAsJSON:JSON = []
+        for param in params {
+            if (param.value != nil) {
+                paramsAsJSON = paramsAsJSON.merging(with: [param.key: param.value])
+            }
+        }
+        return paramsAsJSON
+    }
+    
+    // Creates a new action using CWI.createAction
+    @available(iOS 15.0, *)
+    public func createAction(inputs: JSON? = nil, outputs: JSON, description: String, bridges: JSON? = nil, labels: JSON? = nil) async -> JSON {
+        
+        let params:[String:JSON] = [
+            "inputs": inputs ?? nil,
+            "outputs": outputs,
+            "description": convertToJSONString(param: description),
+            "bridges": bridges ?? nil,
+            "labels": labels ?? nil
+        ]
+        let paramsAsJSON:JSON = getValidJSON(params: params)
+        
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"createAction",
+            "params": paramsAsJSON
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        
+        // TODO: Decide on return type
+        return responseObject
     }
     
     @available(iOS 15.0, *)
