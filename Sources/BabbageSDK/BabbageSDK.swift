@@ -244,6 +244,51 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
+    public func verifyHmac() {
+        // TODO
+    }
+    
+    @available(iOS 15.0, *)
+    public func createSignature() {
+        // TODO
+    }
+    
+    @available(iOS 15.0, *)
+    public func verifySignature() {
+        // TODO
+    }
+    
+    @available(iOS 15.0, *)
+    public func createCertificate() {
+        // TODO
+    }
+    
+    @available(iOS 15.0, *)
+    public func getCertificates() {
+        // TODO
+    }
+    
+    @available(iOS 15.0, *)
+    public func proveCertificates() {
+        // TODO
+    }
+    
+    @available(iOS 15.0, *)
+    public func submitDirectTransaction() {
+        // TODO
+    }
+    
+    @available(iOS 15.0, *)
+    public func getPublicKey() {
+        // TODO
+    }
+    
+    @available(iOS 15.0, *)
+    public func getVersion() {
+        // TODO
+    }
+    
+    @available(iOS 15.0, *)
     public func isAuthenticated() async -> Bool {
         // Construct the expected command to send
         var cmd:JSON = [
