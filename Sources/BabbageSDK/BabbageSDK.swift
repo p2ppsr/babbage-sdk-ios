@@ -125,21 +125,26 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     func convertToJSONString(param: String) -> JSON {
         return try! JSON(param)
     }
+    
+    // Convert utf8 string to a base64 string
+    func convertStringToBase64(data: String) -> String {
+        let utf8str = data.data(using: .utf8)
+        return (utf8str?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)))!
+    }
 
     // Encrypts data using CWI.encrypt
     @available(iOS 15.0, *)
     public func encrypt(plaintext: String, protocolID: String, keyID: String) async -> String {
         
         // Convert the string to a base64 string
-        let utf8str = plaintext.data(using: .utf8)
-        let base64Encoded = utf8str?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0))
+        let base64Encoded = convertStringToBase64(data: plaintext)
         
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
             "call":"encrypt",
             "params": [
-                "plaintext": convertToJSONString(param: base64Encoded!),
+                "plaintext": convertToJSONString(param: base64Encoded),
                 "protocolID": convertToJSONString(param: protocolID),
                 "keyID": convertToJSONString(param: keyID),
                 "returnType": "string"
@@ -215,6 +220,29 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         return responseObject
     }
     
+    // Creates an Hmac using CWI.createHmac
+    @available(iOS 15.0, *)
+    public func createHmac(data: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = "self", privileged: Bool? = nil) async -> String {
+        // Construct the expected command to send
+        // TODO: Add support for other params
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"createHmac",
+            "params": [
+                "data": convertToJSONString(param: convertStringToBase64(data: data)),
+                "protocolID": convertToJSONString(param: protocolID),
+                "keyID": convertToJSONString(param: keyID),
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        
+        // Pull out the expect result string
+        let decryptedText:String = (responseObject.objectValue?["result"]?.stringValue)!
+        return decryptedText
+    }
+    
     @available(iOS 15.0, *)
     public func isAuthenticated() async -> Bool {
         // Construct the expected command to send
@@ -268,7 +296,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         let result = Future<JSON, Never>() { promise in
             let callback: Callback = { response in
             
-                print(response)
+//                print(response)
                 self.callbackIDMap.removeValue(forKey: id)
                 // Convert the JSON string into a JSON swift object
                 let jsonResponse = try! JSONDecoder().decode(JSON.self, from: response.data(using: .utf8)!)
