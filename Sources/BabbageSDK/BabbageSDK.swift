@@ -408,6 +408,25 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
+    public func createPushDropScript(fields: JSON, protocolID: String, keyID: String) async -> String {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"pushdrop.create",
+            "params": [
+                "fields": fields,
+                "protocolID": convertToJSONString(param: protocolID),
+                "keyID": convertToJSONString(param: keyID)
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        let script:String = (responseObject.objectValue?["result"]?.stringValue)!
+        return script
+    }
+    
+    @available(iOS 15.0, *)
     public func getPublicKey(protocolID: String? = nil, keyID: String? = nil, priviliged: Bool? = nil, identityKey: Bool? = nil, reason: String? = nil, counterparty: String? = "self", description: String? = nil) async -> String {
         // Construct the expected command to send
         // TODO: Add support for other params and testing for nil values
