@@ -277,13 +277,58 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func createSignature() {
-        // TODO
+    public func createSignature(data: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: String? = nil) async -> String {
+        // Construct the expected command to send
+        // TODO: Add support for other params
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"createSignature",
+            "params": [
+                "data": convertToJSONString(param: convertStringToBase64(data: data)),
+                "protocolID": convertToJSONString(param: protocolID),
+                "keyID": convertToJSONString(param: keyID),
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        
+        // Pull out the expect result string
+        let signature:String = (responseObject.objectValue?["result"]?.stringValue)!
+        return signature
     }
     
     @available(iOS 15.0, *)
-    public func verifySignature() {
-        // TODO
+    public func verifySignature(data: String, signature: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: String? = nil, reasong: String? = nil) async -> Bool{
+        // Make sure data and signature are base64 strings
+        var data = data
+        var signature = signature
+        if (!base64StringRegex.matches(data)) {
+            data = convertStringToBase64(data: data)
+        }
+        if (!base64StringRegex.matches(signature)) {
+            signature = convertStringToBase64(data: signature)
+        }
+        
+        // TODO: Add support for other params
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"verifySignature",
+            "params": [
+                "data": convertToJSONString(param: data),
+                "signature": convertToJSONString(param: signature),
+                "protocolID": convertToJSONString(param: protocolID),
+                "keyID": convertToJSONString(param: keyID)
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        
+        // Pull out the expect result boolean
+        let verified:Bool = (responseObject.objectValue?["result"]?.boolValue)!
+        return verified
     }
     
     @available(iOS 15.0, *)
