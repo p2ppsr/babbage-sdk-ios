@@ -373,8 +373,20 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func getVersion() {
-        // TODO
+    public func getVersion() async -> String {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"getVersion",
+            "params": []
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        
+        // Pull out the expect result string
+        let version:String = (responseObject.objectValue?["result"]?.stringValue)!
+        return version
     }
     
     @available(iOS 15.0, *)
