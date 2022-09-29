@@ -356,7 +356,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
-            "call":"getCertificates",
+            "call":"ninja.findCertificates",
             "params": [
                 "certifiers": certifiers,
                 "types": types
@@ -391,14 +391,14 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
-            "call":"submitDirectTransaction",
+            "call":"ninja.submitDirectTransaction",
             "params": [
                 "protocol": convertToJSONString(param: protocolID),
                 "transaction": transaction,
                 "senderIdentityKey": convertToJSONString(param: senderIdentityKey),
                 "note": convertToJSONString(param: note),
                 "amount": try! JSON(amount),
-//                "derivationPrefix": derivationPrefix // TODO: Check for nil param first
+                "derivationPrefix": convertToJSONString(param: derivationPrefix!) // TODO: Check for nil param first
             ]
         ]
         
