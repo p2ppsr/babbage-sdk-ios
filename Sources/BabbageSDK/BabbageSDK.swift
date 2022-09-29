@@ -332,23 +332,79 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func createCertificate() {
-        // TODO
+    public func createCertificate(certificateType: String, fieldObject: JSON, certifierUrl: String, certifierPublicKey: String) async -> JSON {
+        // Construct the expected command to send
+        // TODO: Add support for other params
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"createCertificate",
+            "params": [
+                "certificateType": convertToJSONString(param: certificateType),
+                "fieldObject": fieldObject,
+                "certifierUrl": convertToJSONString(param: certifierUrl),
+                "certifierPublicKey": convertToJSONString(param: certifierPublicKey)
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let signedCertificate = await runCommand(cmd: &cmd).value
+        return signedCertificate
     }
     
     @available(iOS 15.0, *)
-    public func getCertificates() {
-        // TODO
+    public func getCertificates(certifiers: JSON, types: JSON) async -> JSON {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"getCertificates",
+            "params": [
+                "certifiers": certifiers,
+                "types": types
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let certificates = await runCommand(cmd: &cmd).value
+        return certificates
     }
     
     @available(iOS 15.0, *)
-    public func proveCertificates() {
-        // TODO
+    public func proveCertificate(certificate: JSON, fieldsToReveal: JSON? = nil, verifierPublicIdentityKey: String) async -> JSON {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"proveCertificate",
+            "params": [
+                "certificate": certificate,
+                "fieldsToReveal": fieldsToReveal!, // TODO: Check for nil param first
+                "verifierPublicIdentityKey": convertToJSONString(param: verifierPublicIdentityKey)
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let provableCertificate = await runCommand(cmd: &cmd).value
+        return provableCertificate
     }
     
     @available(iOS 15.0, *)
-    public func submitDirectTransaction() {
-        // TODO
+    public func submitDirectTransaction(protocolID: String, transaction: JSON, senderIdentityKey: String, note: String, amount: Int, derivationPrefix: String? = nil) async -> JSON {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"submitDirectTransaction",
+            "params": [
+                "protocol": convertToJSONString(param: protocolID),
+                "transaction": transaction,
+                "senderIdentityKey": convertToJSONString(param: senderIdentityKey),
+                "note": convertToJSONString(param: note),
+                "amount": try! JSON(amount),
+//                "derivationPrefix": derivationPrefix // TODO: Check for nil param first
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let provableCertificate = await runCommand(cmd: &cmd).value
+        return provableCertificate
     }
     
     @available(iOS 15.0, *)
