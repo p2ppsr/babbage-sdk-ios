@@ -11,6 +11,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     public var callbackIDMap: [String : Callback] = [:]
 
     var webviewStartURL:String = ""
+    let base64StringRegex = NSRegularExpression("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$")
     
     public func setParent(parent: UIViewController) {
         parent.addChild(self)
@@ -242,10 +243,37 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         let decryptedText:String = (responseObject.objectValue?["result"]?.stringValue)!
         return decryptedText
     }
-    
     @available(iOS 15.0, *)
-    public func verifyHmac() {
-        // TODO
+    public func verifyHmac(data: String, hmac: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: Bool? = nil) async -> Bool {
+        // Make sure data and hmac are base64 strings
+        var data = data
+        var hmac = hmac
+        if (!base64StringRegex.matches(hmac)) {
+            hmac = convertStringToBase64(data: hmac)
+        }
+        if (!base64StringRegex.matches(data)) {
+            data = convertStringToBase64(data: data)
+        }
+        
+        // TODO: Add support for other params
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"verifyHmac",
+            "params": [
+                "data": convertToJSONString(param: data),
+                "hmac": convertToJSONString(param: hmac),
+                "protocolID": convertToJSONString(param: protocolID),
+                "keyID": convertToJSONString(param: keyID)
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        
+        // Pull out the expect result boolean
+        let verified:Bool = (responseObject.objectValue?["result"]?.boolValue)!
+        return verified
     }
     
     @available(iOS 15.0, *)
@@ -388,4 +416,23 @@ extension UIView {
         )
     }
     
+}
+
+
+// Reference -> https://www.hackingwithswift.com/forums/swift/base64-decoded-content-is-nil/7763
+extension NSRegularExpression {
+    convenience init(_ pattern: String) {
+        do {
+            try self.init(pattern: pattern)
+        } catch {
+            preconditionFailure("Illegal regular expression: \(pattern).")
+        }
+    }
+}
+
+extension NSRegularExpression {
+    func matches(_ string: String) -> Bool {
+        let range = NSRange(location: 0, length: string.utf16.count)
+        return firstMatch(in: string, options: [], range: range) != nil
+    }
 }
