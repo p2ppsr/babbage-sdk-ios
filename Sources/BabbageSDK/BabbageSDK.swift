@@ -518,6 +518,43 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         let result = await runCommand(cmd: &cmd).value
         return result
     }
+    
+    @available(iOS 15.0, *)
+    public func downloadUHRPFile(URL: String, bridgeportResolvers: JSON) async -> JSON {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"downloadFile",
+            "params": [
+                "URL": convertToJSONString(param: URL),
+                "bridgeportResolvers": bridgeportResolvers
+            ]
+        ]
+        
+        // TODO: Determine return type and best way to transfer large bytes of data.
+        // Run the command and get the response JSON object
+        let result = await runCommand(cmd: &cmd).value
+        return result
+    }
+    
+    @available(iOS 15.0, *)
+    public func newAuthriteRequest(params: JSON, requestUrl: String, fetchConfig: JSON) async -> JSON {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"newAuthriteRequest",
+            "params": [
+                "params": params,
+                "requestUrl": convertToJSONString(param: requestUrl),
+                "fetchConfig": fetchConfig
+            ]
+        ]
+        
+        // TODO: Determine return type and best way to transfer large bytes of data.
+        // Run the command and get the response JSON object
+        let result = await runCommand(cmd: &cmd).value
+        return result
+    }
 
     // Execute the BabbageCommand
     public func runCommand(cmd: inout JSON)-> Combine.Future <JSON, Never> {
