@@ -503,16 +503,18 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func parapetRequest(bridge: String, request: JSON) async -> JSON {
+    public func parapetRequest(resolvers: JSON, bridge: String, type: String, query: JSON) async -> JSON {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
             "call":"parapet",
             "params": [
-                "brige": convertToJSONString(param: bridge),
-                "request": request
+                "resolvers": resolvers,
+                "bridge": convertToJSONString(param: bridge),
+                "type": convertToJSONString(param: type),
+                "query": query
+              ]
             ]
-        ]
         
         // Run the command and get the response JSON object
         let result = await runCommand(cmd: &cmd).value
