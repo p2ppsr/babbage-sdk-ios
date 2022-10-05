@@ -132,6 +132,22 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         let utf8str = data.data(using: .utf8)
         return (utf8str?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)))!
     }
+    
+    // Generates a secure random base64 string base on provided byte length
+    public func generateRandomBase64String(byteCount: Int) -> String {
+        var bytes = [UInt8](repeating: 0, count: byteCount)
+        let status = SecRandomCopyBytes(
+            kSecRandomDefault,
+            10,
+            &bytes
+        )
+        // A status of errSecSuccess indicates success
+        if status != errSecSuccess {
+          return "Error"
+        }
+        let data = Data(bytes)
+        return data.base64EncodedString()
+    }
 
     // Encrypts data using CWI.encrypt
     @available(iOS 15.0, *)
