@@ -128,7 +128,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     // Convert utf8 string to a base64 string
-    func convertStringToBase64(data: String) -> String {
+    public func convertStringToBase64(data: String) -> String {
         let utf8str = data.data(using: .utf8)
         return (utf8str?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)))!
     }
@@ -138,7 +138,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         var bytes = [UInt8](repeating: 0, count: byteCount)
         let status = SecRandomCopyBytes(
             kSecRandomDefault,
-            10,
+            byteCount,
             &bytes
         )
         // A status of errSecSuccess indicates success
@@ -431,7 +431,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             "type":"CWI",
             "call":"getPublicKey",
             "params": [
-                "protocolID": convertToJSONString(param: protocolID!),
+                "protocolID": convertToJSONString(param: protocolID!), // TODO: Support syntax with security level.
                 "keyID": convertToJSONString(param: keyID!),
             ]
         ]
