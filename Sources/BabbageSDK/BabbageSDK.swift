@@ -538,7 +538,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func downloadUHRPFile(URL: String, bridgeportResolvers: JSON) async -> JSON {
+    public func downloadUHRPFile(URL: String, bridgeportResolvers: JSON) async -> Data? {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -552,7 +552,14 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         // TODO: Determine return type and best way to transfer large bytes of data.
         // Run the command and get the response JSON object
         let result = await runCommand(cmd: &cmd).value
-        return result
+        
+        // Convert the array of JSON objects to an Array of UInt8s and then to a Data object
+        // TODO: Optimize further
+        if let arrayOfJSONObjects = result.objectValue?["result"]?.objectValue?["data"]?.objectValue?["data"]?.arrayValue {
+            let byteArray:[UInt8] = arrayOfJSONObjects.map { UInt8($0.doubleValue!)}
+            return Data(byteArray)
+        }
+        return nil
     }
     
     @available(iOS 15.0, *)
