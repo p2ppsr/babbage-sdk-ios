@@ -580,6 +580,22 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         let result = await runCommand(cmd: &cmd).value
         return result
     }
+    
+    @available(iOS 15.0, *)
+    public func createOutputScriptFromPubKey(derivedPublicKey: String) async -> String {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"createOutputScriptFromPubKey",
+            "params": [
+                "derivedPublicKey": convertToJSONString(param: derivedPublicKey)
+            ]
+        ]
+
+        // Run the command and get the response as a string
+        let responseObject = await runCommand(cmd: &cmd).value
+        return (responseObject.objectValue?["result"]?.stringValue)!
+    }
 
     // Execute the BabbageCommand
     public func runCommand(cmd: inout JSON)-> Combine.Future <JSON, Never> {
@@ -603,7 +619,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             }
 
             self.callbackIDMap[id] = callback
-            print(self.callbackIDMap)
+//            print(self.callbackIDMap)
         }
         do {
             let jsonData = try JSONEncoder().encode(cmd)
