@@ -175,6 +175,71 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         let encryptedText:String = (responseObject.objectValue?["result"]?.stringValue)!
         return encryptedText
     }
+    
+    @available(iOS 15.0, *)
+    public func generateCryptoKey() async -> String {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"generateCryptoKey",
+            "params": []
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        
+        // Pull out the expect result string
+        let cryptoKey:String = (responseObject.objectValue?["result"]?.stringValue)!
+        return cryptoKey
+    }
+    
+    @available(iOS 15.0, *)
+    public func encryptUsingCryptoKey(plaintext: String, base64CryptoKey: String, returnType: String? = "base64") async -> String {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"encryptUsingCryptoKey",
+            "params": [
+                "plaintext": convertToJSONString(param: plaintext),
+                "base64CryptoKey": convertToJSONString(param: base64CryptoKey),
+                "returnType": convertToJSONString(param: returnType ?? "base64")
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        
+        // Pull out the expect result string
+        // TODO: Support buffer return type
+        if (returnType == "base64") {
+            return (responseObject.objectValue?["result"]?.stringValue)!
+        }
+        return "Error: Unsupported type!"
+    }
+    
+    @available(iOS 15.0, *)
+    public func decryptUsingCryptoKey(ciphertext: String, base64CryptoKey: String, returnType: String? = "base64") async -> String {
+        // Construct the expected command to send
+        var cmd:JSON = [
+            "type":"CWI",
+            "call":"decryptUsingCryptoKey",
+            "params": [
+                "ciphertext": convertToJSONString(param: ciphertext),
+                "base64CryptoKey": convertToJSONString(param: base64CryptoKey),
+                "returnType": convertToJSONString(param: returnType ?? "base64")
+            ]
+        ]
+        
+        // Run the command and get the response JSON object
+        let responseObject = await runCommand(cmd: &cmd).value
+        
+        // Pull out the expect result string
+        // TODO: Support buffer return type
+        if (returnType == "base64") {
+            return (responseObject.objectValue?["result"]?.stringValue)!
+        }
+        return "Error: Unsupported type!"
+    }
 
     // Encrypts data using CWI.decrypt
     @available(iOS 15.0, *)
