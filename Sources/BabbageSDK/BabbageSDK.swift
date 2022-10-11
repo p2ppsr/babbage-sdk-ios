@@ -298,15 +298,13 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         // Run the command and get the response JSON object
         let responseObject = await runCommand(cmd: &cmd).value
         
-        // TODO: Decide on return type
         return responseObject
     }
     
     // Creates an Hmac using CWI.createHmac
     @available(iOS 15.0, *)
     public func createHmac(data: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = "self", privileged: Bool? = nil) async -> String {
-        // Construct the expected command to send
-        // TODO: Add support for other params
+        // Construct the expected command to send with default values for nil params
         var cmd:JSON = [
             "type":"CWI",
             "call":"createHmac",
@@ -314,6 +312,9 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                 "data": convertToJSONString(param: convertStringToBase64(data: data)),
                 "protocolID": convertToJSONString(param: protocolID),
                 "keyID": convertToJSONString(param: keyID),
+                "description": try! JSON(description ?? ""),
+                "counterparty": try! JSON(counterparty ?? ""),
+                "privileged": try! JSON(privileged ?? false)
             ]
         ]
         
@@ -336,7 +337,6 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             data = convertStringToBase64(data: data)
         }
         
-        // TODO: Add support for other params
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -345,7 +345,10 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                 "data": convertToJSONString(param: data),
                 "hmac": convertToJSONString(param: hmac),
                 "protocolID": convertToJSONString(param: protocolID),
-                "keyID": convertToJSONString(param: keyID)
+                "keyID": convertToJSONString(param: keyID),
+                "description": try! JSON(description ?? ""),
+                "counterparty": try! JSON(counterparty ?? ""),
+                "privileged": try! JSON(privileged ?? false)
             ]
         ]
         
@@ -360,7 +363,6 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     @available(iOS 15.0, *)
     public func createSignature(data: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: String? = nil) async -> String {
         // Construct the expected command to send
-        // TODO: Add support for other params
         var cmd:JSON = [
             "type":"CWI",
             "call":"createSignature",
@@ -368,6 +370,9 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                 "data": convertToJSONString(param: convertStringToBase64(data: data)),
                 "protocolID": convertToJSONString(param: protocolID),
                 "keyID": convertToJSONString(param: keyID),
+                "description": try! JSON(description ?? ""),
+                "counterparty": try! JSON(counterparty ?? ""),
+                "privileged": try! JSON(privileged ?? false)
             ]
         ]
         
@@ -380,7 +385,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func verifySignature(data: String, signature: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: String? = nil, reasong: String? = nil) async -> Bool{
+    public func verifySignature(data: String, signature: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: String? = nil, reason: String? = nil) async -> Bool{
         // Make sure data and signature are base64 strings
         var data = data
         var signature = signature
@@ -391,7 +396,6 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             signature = convertStringToBase64(data: signature)
         }
         
-        // TODO: Add support for other params
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -400,7 +404,11 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                 "data": convertToJSONString(param: data),
                 "signature": convertToJSONString(param: signature),
                 "protocolID": convertToJSONString(param: protocolID),
-                "keyID": convertToJSONString(param: keyID)
+                "keyID": convertToJSONString(param: keyID),
+                "description": try! JSON(description ?? ""),
+                "counterparty": try! JSON(counterparty ?? ""),
+                "privileged": try! JSON(privileged ?? false),
+                "reason": try! JSON(reason ?? "")
             ]
         ]
         
@@ -415,7 +423,6 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     @available(iOS 15.0, *)
     public func createCertificate(certificateType: String, fieldObject: JSON, certifierUrl: String, certifierPublicKey: String) async -> JSON {
         // Construct the expected command to send
-        // TODO: Add support for other params
         var cmd:JSON = [
             "type":"CWI",
             "call":"createCertificate",
@@ -457,10 +464,11 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             "call":"proveCertificate",
             "params": [
                 "certificate": certificate,
-                "fieldsToReveal": fieldsToReveal!, // TODO: Check for nil param first
+                "fieldsToReveal": fieldsToReveal ?? nil,
                 "verifierPublicIdentityKey": convertToJSONString(param: verifierPublicIdentityKey)
             ]
         ]
+        
         
         // Run the command and get the response JSON object
         let provableCertificate = await runCommand(cmd: &cmd).value
@@ -479,7 +487,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                 "senderIdentityKey": convertToJSONString(param: senderIdentityKey),
                 "note": convertToJSONString(param: note),
                 "amount": try! JSON(amount),
-                "derivationPrefix": convertToJSONString(param: derivationPrefix!) // TODO: Check for nil param first
+                "derivationPrefix": try! JSON(derivationPrefix ?? "")
             ]
         ]
         
@@ -491,13 +499,18 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     @available(iOS 15.0, *)
     public func getPublicKey(protocolID: JSON?, keyID: String? = nil, priviliged: Bool? = nil, identityKey: Bool? = nil, reason: String? = nil, counterparty: String? = "self", description: String? = nil) async -> String {
         // Construct the expected command to send
-        // TODO: Add support for other params and testing for nil values
+        // Added default values for dealing with nil params
         var cmd:JSON = [
             "type":"CWI",
             "call":"getPublicKey",
             "params": [
-                "protocolID": protocolID!,
-                "keyID": convertToJSONString(param: keyID!),
+                "protocolID": protocolID ?? "",
+                "keyID": try! JSON(keyID!),
+                "priviliged": try! JSON(priviliged ?? false),
+                "identityKey": try! JSON(identityKey ?? false),
+                "reason": try! JSON(reason ?? ""),
+                "counterparty": try! JSON(counterparty ?? ""),
+                "description": try! JSON(description ?? "")
             ]
         ]
         
