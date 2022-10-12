@@ -133,8 +133,13 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         return (utf8str?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)))!
     }
     
+    // TODO: Define standard Swift error handling that conforms to Babbage standards.
+    enum BabError: Error {
+        case genericError(String)
+    }
+    
     // Generates a secure random base64 string base on provided byte length
-    public func generateRandomBase64String(byteCount: Int) -> String {
+    public func generateSecureRandomBase64String(byteCount: Int) throws -> String {
         var bytes = [UInt8](repeating: 0, count: byteCount)
         let status = SecRandomCopyBytes(
             kSecRandomDefault,
@@ -142,9 +147,9 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             &bytes
         )
         // A status of errSecSuccess indicates success
-        if status != errSecSuccess {
-          return "Error"
-        }
+        guard status == errSecSuccess else {
+            throw BabError.genericError("Failed to create secure bytes!")
+         }
         let data = Data(bytes)
         return data.base64EncodedString()
     }
@@ -177,11 +182,11 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func generateCryptoKey() async -> String {
+    public func generateAES256GCMCryptoKey() async -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
-            "call":"generateCryptoKey",
+            "call":"generateAES256GCMCryptoKey",
             "params": []
         ]
         
@@ -597,16 +602,15 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func parapetRequest(resolvers: JSON, bridge: String, type: String, query: JSON) async -> JSON {
+    public func parapetJSONQuery(resolvers: JSON, bridge: String, request: JSON) async -> JSON {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
-            "call":"parapet",
+            "call":"parapetJSONQuery",
             "params": [
                 "resolvers": resolvers,
                 "bridge": convertToJSONString(param: bridge),
-                "type": convertToJSONString(param: type),
-                "query": query
+                "request": request
               ]
             ]
         
@@ -645,7 +649,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
-            "call":"newAuthriteRequest",
+            "call":"newJSONAuthriteRequest",
             "params": [
                 "params": params,
                 "requestUrl": convertToJSONString(param: requestUrl),
@@ -681,8 +685,11 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         let id:String = NSUUID().uuidString
         webView.configuration.userContentController.add(self, name: id)
         
+        let bundleIdentifier:String = Bundle.main.bundleIdentifier!
+        
         let callbackID:JSON = [
-            "id":  try! JSON(id)
+            "id":  try! JSON(id),
+            "originator": try! JSON(bundleIdentifier)
         ]
         // Update the cmd to contain the new callback id
         cmd = cmd.merging(with: callbackID)
