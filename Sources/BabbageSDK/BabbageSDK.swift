@@ -45,6 +45,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         webView.customUserAgent = "babbage-webview-inlay"
         webView.configuration.userContentController.add(self, name: "openBabbage")
         webView.configuration.userContentController.add(self, name: "closeBabbage")
+        webView.configuration.userContentController.add(self, name: "isFocused")
 
         // Disable zooming on webview
         let source: String = "var meta = document.createElement('meta');" +
@@ -58,10 +59,6 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         // Load the request url for hades server
         let request = NSURLRequest(url: URL(string: webviewStartURL)!)
         webView.load(request as URLRequest)
-    }
-    
-    public override func viewDidLoad() {
-        super.viewDidLoad()
     }
     
     // Show / Hide the BabbageViewController
@@ -95,6 +92,19 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             hideView()
         } else if (message.name == "openBabbage") {
             showView()
+        }
+        else if (message.name == "isFocused") {
+            let isFocused = !self.view.isHidden
+            let cmd:JSON = [
+                "type":"CWI",
+                "call":"isFocused",
+                "params": [
+                    "isFocused": try! JSON(isFocused),
+                ]
+            ]
+            let jsonData = try! JSONEncoder().encode(cmd)
+            let jsonString = String(data: jsonData, encoding: .utf8)!
+            self.webView.evaluateJavaScript("window.postMessage(\(jsonString))")
         } else {
             callbackIDMap[message.name]!(response)
         }
