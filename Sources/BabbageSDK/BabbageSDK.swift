@@ -36,6 +36,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         // Create the webview and set it to the view
         webView = WKWebView()
         webView.frame  = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        webView.contentMode = .scaleAspectFit
         self.view = webView
         self.view.isHidden = true
 
@@ -166,7 +167,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
 
     // Encrypts data using CWI.encrypt
     @available(iOS 15.0, *)
-    public func encrypt(plaintext: String, protocolID: String, keyID: String) async -> String {
+    public func encrypt(plaintext: String, protocolID: String, keyID: String, counterparty: String? = "self") async -> String {
         
         // Convert the string to a base64 string
         let base64Encoded = convertStringToBase64(data: plaintext)
@@ -179,6 +180,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                 "plaintext": convertToJSONString(param: base64Encoded),
                 "protocolID": convertToJSONString(param: protocolID),
                 "keyID": convertToJSONString(param: keyID),
+                "counterparty": convertToJSONString(param: counterparty!),
                 "returnType": "string"
             ]
         ]
@@ -258,7 +260,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
 
     // Encrypts data using CWI.decrypt
     @available(iOS 15.0, *)
-    public func decrypt(ciphertext: String, protocolID: String, keyID: String) async -> String {
+    public func decrypt(ciphertext: String, protocolID: String, keyID: String, counterparty: String? = "self") async -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -267,6 +269,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                 "ciphertext": convertToJSONString(param: ciphertext),
                 "protocolID": convertToJSONString(param: protocolID),
                 "keyID": convertToJSONString(param: keyID),
+                "counterparty": convertToJSONString(param: counterparty!),
                 "returnType": "string"
             ]
         ]
@@ -655,7 +658,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func newAuthriteRequest(params: JSON, requestUrl: String, fetchConfig: JSON) async -> JSON {
+    public func newAuthriteRequest(params: JSON, requestUrl: String, fetchConfig: JSON, useNewClient: Bool = false) async -> JSON {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -663,7 +666,8 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             "params": [
                 "params": params,
                 "requestUrl": convertToJSONString(param: requestUrl),
-                "fetchConfig": fetchConfig
+                "fetchConfig": fetchConfig,
+                "useNewClient": try! JSON(useNewClient)
             ]
         ]
         
@@ -695,7 +699,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         let id:String = NSUUID().uuidString
         webView.configuration.userContentController.add(self, name: id)
         
-        let bundleIdentifier:String = Bundle.main.bundleIdentifier!
+        let bundleIdentifier:String = "iOS_" + Bundle.main.bundleIdentifier!
         
         let callbackID:JSON = [
             "id":  try! JSON(id),
