@@ -515,15 +515,15 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func getPublicKey(protocolID: JSON?, keyID: String? = nil, priviliged: Bool? = nil, identityKey: Bool? = nil, reason: String? = nil, counterparty: String? = "self", description: String? = nil) async -> String {
+    public func getPublicKey(protocolID: String? = nil, keyID: String? = nil, priviliged: Bool? = nil, identityKey: Bool? = nil, reason: String? = nil, counterparty: String? = "self", description: String? = nil) async -> String {
         // Construct the expected command to send
         // Added default values for dealing with nil params
         var cmd:JSON = [
             "type":"CWI",
             "call":"getPublicKey",
             "params": [
-                "protocolID": protocolID ?? "",
-                "keyID": try! JSON(keyID!),
+                "protocolID": try! JSON(protocolID ?? ""),
+                "keyID": try! JSON(keyID ?? ""),
                 "priviliged": try! JSON(priviliged ?? false),
                 "identityKey": try! JSON(identityKey ?? false),
                 "reason": try! JSON(reason ?? ""),
