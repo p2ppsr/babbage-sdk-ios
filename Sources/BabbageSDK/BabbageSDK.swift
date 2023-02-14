@@ -186,7 +186,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         let encryptedText:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -203,7 +203,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         let cryptoKey:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -224,7 +224,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         // TODO: Support buffer return type
@@ -248,7 +248,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         // TODO: Support buffer return type
@@ -260,7 +260,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
 
     // Encrypts data using CWI.decrypt
     @available(iOS 15.0, *)
-    public func decrypt(ciphertext: String, protocolID: String, keyID: String, counterparty: String? = "self") async -> String {
+    public func decrypt(ciphertext: String, protocolID: String, keyID: String, counterparty: String? = "self") async throws -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -275,7 +275,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         let decryptedText:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -314,7 +319,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         return responseObject
     }
@@ -337,7 +342,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         let decryptedText:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -371,7 +376,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result boolean
         let verified:Bool = (responseObject.objectValue?["result"]?.boolValue)!
@@ -395,7 +400,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         let signature:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -431,7 +436,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result boolean
         let verified:Bool = (responseObject.objectValue?["result"]?.boolValue)!
@@ -453,7 +458,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let signedCertificate = await runCommand(cmd: &cmd).value
+        let signedCertificate = try! await runCommand(cmd: &cmd).value
         return signedCertificate
     }
     
@@ -470,7 +475,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let certificates = await runCommand(cmd: &cmd).value
+        let certificates =  try! await runCommand(cmd: &cmd).value
         return certificates
     }
     
@@ -489,7 +494,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         
         
         // Run the command and get the response JSON object
-        let provableCertificate = await runCommand(cmd: &cmd).value
+        let provableCertificate = try! await runCommand(cmd: &cmd).value
         return provableCertificate
     }
     
@@ -510,7 +515,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let provableCertificate = await runCommand(cmd: &cmd).value
+        let provableCertificate = try! await runCommand(cmd: &cmd).value
         return provableCertificate
     }
     
@@ -533,7 +538,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         let publicKey:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -550,7 +555,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         let version:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -567,7 +572,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         let str:String = try! String(data: JSONEncoder().encode(responseObject.result), encoding: .utf8)!
@@ -586,7 +591,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         
         // Pull out the expect result string
         let str:String = try! String(data: JSONEncoder().encode(responseObject.result), encoding: .utf8)!
@@ -609,7 +614,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         let script:String = (responseObject.objectValue?["result"]?.stringValue)!
         return script
     }
@@ -628,7 +633,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             ]
         
         // Run the command and get the response JSON object
-        let result = await runCommand(cmd: &cmd).value
+        let result =  try! await runCommand(cmd: &cmd).value
         return result
     }
     
@@ -646,7 +651,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         
         // TODO: Determine return type and best way to transfer large bytes of data.
         // Run the command and get the response JSON object
-        let result = await runCommand(cmd: &cmd).value
+        let result = try! await runCommand(cmd: &cmd).value
         
         // Convert the array of JSON objects to an Array of UInt8s and then to a Data object
         // TODO: Optimize further
@@ -673,7 +678,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         
         // TODO: Determine return type and best way to transfer large bytes of data.
         // Run the command and get the response JSON object
-        let result = await runCommand(cmd: &cmd).value
+        let result = try! await runCommand(cmd: &cmd).value
         return result
     }
     
@@ -689,12 +694,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
 
         // Run the command and get the response as a string
-        let responseObject = await runCommand(cmd: &cmd).value
+        let responseObject = try! await runCommand(cmd: &cmd).value
         return (responseObject.objectValue?["result"]?.stringValue)!
     }
 
     // Execute the BabbageCommand
-    public func runCommand(cmd: inout JSON)-> Combine.Future <JSON, Never> {
+    public func runCommand(cmd: inout JSON)-> Combine.Future <JSON, Error> {
         // Generate a callbackID
         let id:String = NSUUID().uuidString
         webView.configuration.userContentController.add(self, name: id)
@@ -707,14 +712,31 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         // Update the cmd to contain the new callback id
         cmd = cmd.merging(with: callbackID)
+        
+        enum CustomError: Error {
+            // Throw when an invalid password is entered
+            case invalidPassword
 
-        let result = Future<JSON, Never>() { promise in
+            // Throw when an expected resource is not found
+            case notFound
+
+            // Throw in all other cases
+            case unexpected(code: Int)
+        }
+
+        let result = Future<JSON, Error>() { promise in
             let callback: Callback = { response in
             
                 self.callbackIDMap.removeValue(forKey: id)
                 // Convert the JSON string into a JSON swift object
                 let jsonResponse = try! JSONDecoder().decode(JSON.self, from: response.data(using: .utf8)!)
-                promise(Result.success(jsonResponse))
+                
+                // Check if any errors were returned
+                if (jsonResponse["status"] == "error") {
+                    promise(.failure(CustomError.notFound))
+                } else {
+                    promise(Result.success(jsonResponse))
+                }
             }
 
             self.callbackIDMap[id] = callback
