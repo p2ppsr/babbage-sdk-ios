@@ -3,8 +3,14 @@ import WebKit
 import Combine
 import GenericJSON
 
+// Defines a protocol for confirming authentication
 public protocol BabbageDelegate: AnyObject {
     func didAuthenticate(status: Bool)
+}
+
+// Defines a standard Babbage error structure
+public struct BabbageError: Error {
+    public var description:String = "Unknown Error"
 }
 
 @available(iOS 13.0, *)
@@ -123,7 +129,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
       // We use this to send data to the webview when it's loaded.
         Task.init {
             if #available(iOS 15.0, *) {
-                let isAuthenticated:Bool? = await isAuthenticated()
+                let isAuthenticated:Bool? = try await isAuthenticated()
 
                 // Show/Hide the view
                 if (isAuthenticated!) {
@@ -131,7 +137,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                     delegate?.didAuthenticate(status: true)
                 } else {
                     showView()
-                    _ = await waitForAuthentication()
+                    _ = try await waitForAuthentication()
                     hideView()
                     delegate?.didAuthenticate(status: true)
                 }
@@ -152,11 +158,6 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         return (utf8str?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)))!
     }
     
-    // TODO: Define standard Swift error handling that conforms to Babbage standards.
-    enum BabError: Error {
-        case genericError(String)
-    }
-    
     // Generates a secure random base64 string base on provided byte length
     public func generateSecureRandomBase64String(byteCount: Int) throws -> String {
         var bytes = [UInt8](repeating: 0, count: byteCount)
@@ -167,7 +168,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         )
         // A status of errSecSuccess indicates success
         guard status == errSecSuccess else {
-            throw BabError.genericError("Failed to create secure bytes!")
+            throw BabbageError(description: "Failed to create secure bytes!")
          }
         let data = Data(bytes)
         return data.base64EncodedString()
@@ -175,7 +176,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
 
     // Encrypts data using CWI.encrypt
     @available(iOS 15.0, *)
-    public func encrypt(plaintext: String, protocolID: String, keyID: String, counterparty: String? = "self") async -> String {
+    public func encrypt(plaintext: String, protocolID: JSON, keyID: String, counterparty: String? = "self") async throws -> String {
         
         // Convert the string to a base64 string
         let base64Encoded = convertStringToBase64(data: plaintext)
@@ -186,7 +187,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             "call":"encrypt",
             "params": [
                 "plaintext": convertToJSONString(param: base64Encoded),
-                "protocolID": convertToJSONString(param: protocolID),
+                "protocolID": protocolID,
                 "keyID": convertToJSONString(param: keyID),
                 "counterparty": convertToJSONString(param: counterparty!),
                 "returnType": "string"
@@ -194,7 +195,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         let encryptedText:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -202,7 +208,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func generateAES256GCMCryptoKey() async -> String {
+    public func generateAES256GCMCryptoKey() async throws -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -211,7 +217,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         let cryptoKey:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -219,7 +230,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func encryptUsingCryptoKey(plaintext: String, base64CryptoKey: String, returnType: String? = "base64") async -> String {
+    public func encryptUsingCryptoKey(plaintext: String, base64CryptoKey: String, returnType: String? = "base64") async throws -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -232,7 +243,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         // TODO: Support buffer return type
@@ -243,7 +259,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func decryptUsingCryptoKey(ciphertext: String, base64CryptoKey: String, returnType: String? = "base64") async -> String {
+    public func decryptUsingCryptoKey(ciphertext: String, base64CryptoKey: String, returnType: String? = "base64") async throws -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -256,7 +272,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         // TODO: Support buffer return type
@@ -268,14 +289,14 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
 
     // Encrypts data using CWI.decrypt
     @available(iOS 15.0, *)
-    public func decrypt(ciphertext: String, protocolID: String, keyID: String, counterparty: String? = "self") async throws -> String {
+    public func decrypt(ciphertext: String, protocolID: JSON, keyID: String, counterparty: String? = "self") async throws -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
             "call":"decrypt",
             "params": [
                 "ciphertext": convertToJSONString(param: ciphertext),
-                "protocolID": convertToJSONString(param: protocolID),
+                "protocolID": protocolID,
                 "keyID": convertToJSONString(param: keyID),
                 "counterparty": convertToJSONString(param: counterparty!),
                 "returnType": "string"
@@ -308,7 +329,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     
     // Creates a new action using CWI.createAction
     @available(iOS 15.0, *)
-    public func createAction(inputs: JSON? = nil, outputs: JSON, description: String, bridges: JSON? = nil, labels: JSON? = nil) async -> JSON {
+    public func createAction(inputs: JSON? = nil, outputs: JSON, description: String, bridges: JSON? = nil, labels: JSON? = nil) async throws -> JSON {
         
         let params:[String:JSON] = [
             "inputs": inputs ?? nil,
@@ -327,21 +348,26 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         return responseObject
     }
     
     // Creates an Hmac using CWI.createHmac
     @available(iOS 15.0, *)
-    public func createHmac(data: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = "self", privileged: Bool? = nil) async -> String {
+    public func createHmac(data: String, protocolID: JSON, keyID: String, description: String? = nil, counterparty: String? = "self", privileged: Bool? = nil) async throws -> String {
         // Construct the expected command to send with default values for nil params
         var cmd:JSON = [
             "type":"CWI",
             "call":"createHmac",
             "params": [
                 "data": convertToJSONString(param: convertStringToBase64(data: data)),
-                "protocolID": convertToJSONString(param: protocolID),
+                "protocolID": protocolID,
                 "keyID": convertToJSONString(param: keyID),
                 "description": try! JSON(description ?? ""),
                 "counterparty": try! JSON(counterparty ?? ""),
@@ -350,14 +376,19 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         let decryptedText:String = (responseObject.objectValue?["result"]?.stringValue)!
         return decryptedText
     }
     @available(iOS 15.0, *)
-    public func verifyHmac(data: String, hmac: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: Bool? = nil) async -> Bool {
+    public func verifyHmac(data: String, hmac: String, protocolID: JSON, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: Bool? = nil) async throws -> Bool {
         // Make sure data and hmac are base64 strings
         var data = data
         var hmac = hmac
@@ -375,7 +406,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             "params": [
                 "data": convertToJSONString(param: data),
                 "hmac": convertToJSONString(param: hmac),
-                "protocolID": convertToJSONString(param: protocolID),
+                "protocolID": protocolID,
                 "keyID": convertToJSONString(param: keyID),
                 "description": try! JSON(description ?? ""),
                 "counterparty": try! JSON(counterparty ?? ""),
@@ -384,7 +415,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result boolean
         let verified:Bool = (responseObject.objectValue?["result"]?.boolValue)!
@@ -392,14 +428,14 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func createSignature(data: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: String? = nil) async -> String {
+    public func createSignature(data: String, protocolID: JSON, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: String? = nil) async throws -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
             "call":"createSignature",
             "params": [
                 "data": convertToJSONString(param: convertStringToBase64(data: data)),
-                "protocolID": convertToJSONString(param: protocolID),
+                "protocolID": protocolID,
                 "keyID": convertToJSONString(param: keyID),
                 "description": try! JSON(description ?? ""),
                 "counterparty": try! JSON(counterparty ?? ""),
@@ -408,7 +444,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         let signature:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -416,7 +457,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func verifySignature(data: String, signature: String, protocolID: String, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: String? = nil, reason: String? = nil) async -> Bool{
+    public func verifySignature(data: String, signature: String, protocolID: JSON, keyID: String, description: String? = nil, counterparty: String? = nil, privileged: String? = nil, reason: String? = nil) async throws -> Bool{
         // Make sure data and signature are base64 strings
         var data = data
         var signature = signature
@@ -434,7 +475,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             "params": [
                 "data": convertToJSONString(param: data),
                 "signature": convertToJSONString(param: signature),
-                "protocolID": convertToJSONString(param: protocolID),
+                "protocolID": protocolID,
                 "keyID": convertToJSONString(param: keyID),
                 "description": try! JSON(description ?? ""),
                 "counterparty": try! JSON(counterparty ?? ""),
@@ -444,7 +485,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result boolean
         let verified:Bool = (responseObject.objectValue?["result"]?.boolValue)!
@@ -452,7 +498,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func createCertificate(certificateType: String, fieldObject: JSON, certifierUrl: String, certifierPublicKey: String) async -> JSON {
+    public func createCertificate(certificateType: String, fieldObject: JSON, certifierUrl: String, certifierPublicKey: String) async throws -> JSON {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -466,12 +512,17 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let signedCertificate = try! await runCommand(cmd: &cmd).value
-        return signedCertificate
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
+        return responseObject
     }
     
     @available(iOS 15.0, *)
-    public func getCertificates(certifiers: JSON, types: JSON) async -> JSON {
+    public func getCertificates(certifiers: JSON, types: JSON) async throws -> JSON {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -483,12 +534,17 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let certificates =  try! await runCommand(cmd: &cmd).value
-        return certificates
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
+        return responseObject
     }
     
     @available(iOS 15.0, *)
-    public func proveCertificate(certificate: JSON, fieldsToReveal: JSON? = nil, verifierPublicIdentityKey: String) async -> JSON {
+    public func proveCertificate(certificate: JSON, fieldsToReveal: JSON? = nil, verifierPublicIdentityKey: String) async throws -> JSON {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -502,18 +558,23 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         
         
         // Run the command and get the response JSON object
-        let provableCertificate = try! await runCommand(cmd: &cmd).value
-        return provableCertificate
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
+        return responseObject
     }
     
     @available(iOS 15.0, *)
-    public func submitDirectTransaction(protocolID: String, transaction: JSON, senderIdentityKey: String, note: String, amount: Int, derivationPrefix: String? = nil) async -> JSON {
+    public func submitDirectTransaction(protocolID: JSON, transaction: JSON, senderIdentityKey: String, note: String, amount: Int, derivationPrefix: String? = nil) async throws -> JSON {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
             "call":"ninja.submitDirectTransaction",
             "params": [
-                "protocol": convertToJSONString(param: protocolID),
+                "protocol": protocolID,
                 "transaction": transaction,
                 "senderIdentityKey": convertToJSONString(param: senderIdentityKey),
                 "note": convertToJSONString(param: note),
@@ -523,19 +584,24 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let provableCertificate = try! await runCommand(cmd: &cmd).value
-        return provableCertificate
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
+        return responseObject
     }
     
     @available(iOS 15.0, *)
-    public func getPublicKey(protocolID: String? = nil, keyID: String? = nil, priviliged: Bool? = nil, identityKey: Bool? = nil, reason: String? = nil, counterparty: String? = "self", description: String? = nil) async -> String {
+    public func getPublicKey(protocolID: JSON? = nil, keyID: String? = nil, priviliged: Bool? = nil, identityKey: Bool? = nil, reason: String? = nil, counterparty: String? = "self", description: String? = nil) async throws -> String {
         // Construct the expected command to send
         // Added default values for dealing with nil params
         var cmd:JSON = [
             "type":"CWI",
             "call":"getPublicKey",
             "params": [
-                "protocolID": try! JSON(protocolID ?? ""),
+                "protocolID": protocolID ?? JSON(""),
                 "keyID": try! JSON(keyID ?? ""),
                 "priviliged": try! JSON(priviliged ?? false),
                 "identityKey": try! JSON(identityKey ?? false),
@@ -546,7 +612,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         let publicKey:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -554,7 +625,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func getVersion() async -> String {
+    public func getVersion() async throws -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -563,7 +634,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         let version:String = (responseObject.objectValue?["result"]?.stringValue)!
@@ -571,7 +647,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func isAuthenticated() async -> Bool {
+    public func isAuthenticated() async throws -> Bool {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -580,7 +656,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         let str:String = try! String(data: JSONEncoder().encode(responseObject.result), encoding: .utf8)!
@@ -590,7 +671,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func waitForAuthentication() async -> Bool {
+    public func waitForAuthentication() async throws -> Bool {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -599,7 +680,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Pull out the expect result string
         let str:String = try! String(data: JSONEncoder().encode(responseObject.result), encoding: .utf8)!
@@ -609,26 +695,31 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func createPushDropScript(fields: JSON, protocolID: String, keyID: String) async -> String {
+    public func createPushDropScript(fields: JSON, protocolID: JSON, keyID: String) async throws -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
             "call":"pushdrop.create",
             "params": [
                 "fields": fields,
-                "protocolID": convertToJSONString(param: protocolID),
+                "protocolID": protocolID,
                 "keyID": convertToJSONString(param: keyID)
             ]
         ]
         
         // Run the command and get the response JSON object
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         let script:String = (responseObject.objectValue?["result"]?.stringValue)!
         return script
     }
     
     @available(iOS 15.0, *)
-    public func parapetJSONQuery(resolvers: JSON, bridge: String, request: JSON) async -> JSON {
+    public func parapetJSONQuery(resolvers: JSON, bridge: String, request: JSON) async throws -> JSON {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -641,12 +732,17 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
             ]
         
         // Run the command and get the response JSON object
-        let result =  try! await runCommand(cmd: &cmd).value
-        return result
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
+        return responseObject
     }
     
     @available(iOS 15.0, *)
-    public func downloadUHRPFile(URL: String, bridgeportResolvers: JSON) async -> Data? {
+    public func downloadUHRPFile(URL: String, bridgeportResolvers: JSON) async throws -> Data? {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -659,11 +755,16 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         
         // TODO: Determine return type and best way to transfer large bytes of data.
         // Run the command and get the response JSON object
-        let result = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         
         // Convert the array of JSON objects to an Array of UInt8s and then to a Data object
         // TODO: Optimize further
-        if let arrayOfJSONObjects = result.objectValue?["result"]?.objectValue?["data"]?.objectValue?["data"]?.arrayValue {
+        if let arrayOfJSONObjects = responseObject.objectValue?["result"]?.objectValue?["data"]?.objectValue?["data"]?.arrayValue {
             let byteArray:[UInt8] = arrayOfJSONObjects.map { UInt8($0.doubleValue!)}
             return Data(byteArray)
         }
@@ -671,7 +772,7 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
     }
     
     @available(iOS 15.0, *)
-    public func newAuthriteRequest(params: JSON, requestUrl: String, fetchConfig: JSON, useNewClient: Bool = false) async -> JSON {
+    public func newAuthriteRequest(params: JSON, requestUrl: String, fetchConfig: JSON, useNewClient: Bool = false) async throws -> JSON {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -686,12 +787,17 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         
         // TODO: Determine return type and best way to transfer large bytes of data.
         // Run the command and get the response JSON object
-        let result = try! await runCommand(cmd: &cmd).value
-        return result
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
+        return responseObject
     }
     
     @available(iOS 15.0, *)
-    public func createOutputScriptFromPubKey(derivedPublicKey: String) async -> String {
+    public func createOutputScriptFromPubKey(derivedPublicKey: String) async throws -> String {
         // Construct the expected command to send
         var cmd:JSON = [
             "type":"CWI",
@@ -702,7 +808,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
 
         // Run the command and get the response as a string
-        let responseObject = try! await runCommand(cmd: &cmd).value
+        var responseObject:JSON = []
+        do {
+            responseObject = try await runCommand(cmd: &cmd).value
+        } catch {
+            throw error
+        }
         return (responseObject.objectValue?["result"]?.stringValue)!
     }
 
@@ -720,17 +831,6 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
         ]
         // Update the cmd to contain the new callback id
         cmd = cmd.merging(with: callbackID)
-        
-        enum CustomError: Error {
-            // Throw when an invalid password is entered
-            case invalidPassword
-
-            // Throw when an expected resource is not found
-            case notFound
-
-            // Throw in all other cases
-            case unexpected(code: Int)
-        }
 
         let result = Future<JSON, Error>() { promise in
             let callback: Callback = { response in
@@ -738,10 +838,10 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                 self.callbackIDMap.removeValue(forKey: id)
                 // Convert the JSON string into a JSON swift object
                 let jsonResponse = try! JSONDecoder().decode(JSON.self, from: response.data(using: .utf8)!)
-                
+                // TODO: Parse out and return correct errors
                 // Check if any errors were returned
                 if (jsonResponse["status"] == "error") {
-                    promise(.failure(CustomError.notFound))
+                    promise(.failure(BabbageError(description: (jsonResponse["description"]?.stringValue) ?? "Unknown Error")))
                 } else {
                     promise(Result.success(jsonResponse))
                 }
