@@ -3,6 +3,10 @@ import WebKit
 import Combine
 import GenericJSON
 
+public protocol BabbageDelegate: AnyObject {
+    func didAuthenticate(status: Bool)
+}
+
 @available(iOS 13.0, *)
 public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate {
     
@@ -12,6 +16,8 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
 
     var webviewStartURL:String = ""
     let base64StringRegex = NSRegularExpression("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$")
+    
+    public weak var delegate: BabbageDelegate?
     
     public func setParent(parent: UIViewController) {
         parent.addChild(self)
@@ -122,10 +128,12 @@ public class BabbageSDK: UIViewController, WKScriptMessageHandler, WKNavigationD
                 // Show/Hide the view
                 if (isAuthenticated!) {
                     hideView()
+                    delegate?.didAuthenticate(status: true)
                 } else {
                     showView()
                     _ = await waitForAuthentication()
                     hideView()
+                    delegate?.didAuthenticate(status: true)
                 }
             } else {
                 // Fallback on earlier versions
