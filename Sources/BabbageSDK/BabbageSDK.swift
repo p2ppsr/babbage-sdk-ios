@@ -11,6 +11,10 @@ public protocol BabbageDelegate: AnyObject {
 // Defines a standard Babbage error structure
 public struct BabbageError: Error {
     public var description:String = "Unknown Error"
+    
+    public init(description: String) {
+        self.description = description
+    }
 }
 
 @available(iOS 13.0, *)
